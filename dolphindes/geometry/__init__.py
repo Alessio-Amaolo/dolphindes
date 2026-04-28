@@ -3,13 +3,13 @@
 from .geometry import (
     CartesianFDFDGeometry,
     GeometryHyperparameters,
+    PeriodicLayerGeometry,
     PolarFDFDGeometry,
 )
-from .rcwa_geometry import RCWAGeometry
 
 __all__ = [
     "CartesianFDFDGeometry",
     "GeometryHyperparameters",
     "PolarFDFDGeometry",
-    "RCWAGeometry",
+    "PeriodicLayerGeometry",
 ]

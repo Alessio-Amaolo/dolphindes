@@ -192,3 +192,53 @@ class PolarFDFDGeometry(GeometryHyperparameters):
         """
         area_r = self.r_grid * self.dr * self.dphi
         return cast(FloatNDArray, np.kron(np.ones(self.Nphi), area_r))
+
+
+@dataclass
+class PeriodicLayerGeometry(GeometryHyperparameters):
+    """
+    Periodic layer geometry specification for Rigorous Coupled-Wave Analysis (RCWA).
+
+    Attributes
+    ----------
+    pitch_x : float
+        Unit cell dimension in the x direction.
+    pitch_y : float
+        Unit cell dimension in the y direction.
+    thickness : float
+        Total thickness of the design region.
+    Nz : int
+        Number of discretization layers along the z-axis.
+    num_harmonics_x : int
+        Maximum harmonic order in x. Retained harmonics span [-M, M].
+    num_harmonics_y : int
+        Maximum harmonic order in y. Retained harmonics span [-N, N].
+    """
+
+    pitch_x: float
+    pitch_y: float
+    thickness: float
+    Nz: int
+    num_harmonics_x: int
+    num_harmonics_y: int
+
+    def get_grid_size(self) -> Tuple[int, int]:
+        """Return dimensions representing (Total_Harmonics, Nz)."""
+        num_harm = (2 * self.num_harmonics_x + 1) * (2 * self.num_harmonics_y + 1)
+        return (num_harm, self.Nz)
+
+    def get_pixel_areas(self) -> FloatNDArray:
+        """Return the longitudinal integration weights for the Galerkin basis."""
+        dz = self.thickness / self.Nz
+        num_harm = (2 * self.num_harmonics_x + 1) * (2 * self.num_harmonics_y + 1)
+        return cast(FloatNDArray, np.full(num_harm * self.Nz, dz, dtype=float))
+
+    def get_reciprocal_lattice(self) -> Tuple[FloatNDArray, FloatNDArray]:
+        """Generate the flattened arrays of reciprocal lattice vectors (Gx, Gy)."""
+        ms = np.arange(-self.num_harmonics_x, self.num_harmonics_x + 1)
+        ns = np.arange(-self.num_harmonics_y, self.num_harmonics_y + 1)
+        M, N = np.meshgrid(ms, ns, indexing="ij")
+
+        Gx = M.flatten() * 2 * np.pi / self.pitch_x
+        Gy = N.flatten() * 2 * np.pi / self.pitch_y
+        return cast(FloatNDArray, Gx), cast(FloatNDArray, Gy)
